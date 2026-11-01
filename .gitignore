@@ -1,0 +1,3 @@
+# source/ has its own .gitignore for node_modules, .next and out.
+.DS_Store
+Thumbs.db
