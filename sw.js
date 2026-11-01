@@ -4,7 +4,7 @@
  * 경로는 모두 이 파일 위치 기준(./)이라 Vercel 루트와 GitHub Pages 하위 경로 모두에서 동작합니다.
  * BUILD 값은 scripts/export-html.mjs가 내보낼 때마다 바꿔 넣어 예전 캐시를 비웁니다.
  */
-const BUILD = "20261101091602";
+const BUILD = "20261101094146";
 const CACHE = "nics-" + BUILD;
 
 const CORE = [
@@ -12,8 +12,8 @@ const CORE = [
   "./index.html",
   "./dept.html",
   "./manifest.webmanifest",
-  "./assets/style.css",
-  "./assets/motion.js",
+  "./assets/style.css?v=20261101094146",
+  "./assets/motion.js?v=20261101094146",
   "./sites/nics/logo-dark.png",
   "./sites/nics/logo-white.png",
   "./sites/nics/kv-plant.jpg",

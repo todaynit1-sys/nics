@@ -45,6 +45,10 @@ const css = cssFiles
   .join("\n")
   .replace(/url\((["']?)\/sites\//g, "url($1../sites/");
 
+// Build id: stamped into the stylesheet/script URLs and the service worker. A new deploy
+// therefore never pairs fresh HTML with a CSS/JS file an installed app cached earlier.
+const build = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
+
 const toStatic = (html) =>
   html
     // Next runtime: script tags (including the inline RSC payload), preloads, stylesheets.
@@ -58,8 +62,8 @@ const toStatic = (html) =>
     // Links between pages: "/dept…" -> ./dept.html…, "/" and "/#…" -> ./index.html…
     .replace(/href="\/dept(#[^"]*)?"/g, (_, hash = "") => `href="./dept.html${hash}"`)
     .replace(/href="\/(#[^"]*)?"/g, (_, hash = "") => `href="./index.html${hash}"`)
-    .replace("</head>", '<link rel="stylesheet" href="./assets/style.css"/></head>')
-    .replace("</body>", '<script src="./assets/motion.js" defer></script></body>');
+    .replace("</head>", `<link rel="stylesheet" href="./assets/style.css?v=${build}"/></head>`)
+    .replace("</body>", `<script src="./assets/motion.js?v=${build}" defer></script></body>`);
 const pages = Object.fromEntries(PAGES.map((p) => [p, toStatic(sources[p])]));
 
 for (const generated of [...PAGES, "assets", "sites", "manifest.webmanifest", "sw.js"]) {
@@ -73,10 +77,15 @@ cpSync(join(outDir, "sites/nics/motion.js"), join(target, "assets/motion.js"));
 cpSync(join(outDir, "sites"), join(target, "sites"), { recursive: true });
 rmSync(join(target, "sites/nics/motion.js"));
 // PWA: manifest + service worker at the site root (the worker's scope is its own folder).
-// A fresh BUILD id makes installed apps drop the previous cache after each export.
+// The worker gets the same build id: a new cache name, and it precaches the versioned CSS/JS.
 cpSync(join(outDir, "manifest.webmanifest"), join(target, "manifest.webmanifest"));
-const build = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
-writeFileSync(join(target, "sw.js"), readFileSync(join(outDir, "sw.js"), "utf8").replace("__BUILD__", build));
+writeFileSync(
+  join(target, "sw.js"),
+  readFileSync(join(outDir, "sw.js"), "utf8")
+    .replaceAll("__BUILD__", build)
+    .replace('"./assets/style.css"', `"./assets/style.css?v=${build}"`)
+    .replace('"./assets/motion.js"', `"./assets/motion.js?v=${build}"`),
+);
 
 const left = Object.values(pages).flatMap((h) => h.match(/(src|href)="\/(?!\/)[^"]*"/g) ?? []);
 console.log(`\nStatic HTML written to ${target}`);
