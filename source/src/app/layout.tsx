@@ -3,6 +3,7 @@ import "./globals.css";
 import "@/components/sites/nics/nics.css";
 import "@/components/sites/nics/nics-motion.css";
 import "@/components/sites/nics/nics-app.css";
+import "@/components/sites/nics/nics-dept.css";
 import { HydrationMark } from "@/components/sites/nics/hydration-mark";
 
 export const metadata: Metadata = {

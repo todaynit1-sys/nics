@@ -235,6 +235,56 @@
 .world[data-s="shield"] .house .roofs { fill: rgba(133, 232, 186, 0.3); }
 .world[data-s="shield"] .flow { opacity: 0.5; }
 
+/* ---------- department player states (dept page) ---------- */
+
+/* administration: documents stack up, KPI bars rise, trend line draws */
+.world .doc rect { fill: rgba(217, 247, 255, 0.92); stroke: var(--w-line); stroke-width: 1; }
+.world .doc path { fill: none; stroke: #4b8ea3; stroke-width: 2; stroke-linecap: round; }
+.world .doc { opacity: 0; transition: opacity 0.4s, transform 0.5s; transition-delay: calc(0.2s + var(--i) * 0.15s); }
+.world .trend { fill: none; stroke: var(--w-amber); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.2s ease 0.9s; }
+.world[data-s="admin"] .fx-admin { opacity: 1; }
+.world[data-s="admin"] .doc { opacity: 1; }
+.world[data-s="admin"] .fx-admin .bar { transform: scaleY(1); }
+.world[data-s="admin"] .trend { stroke-dashoffset: 0; }
+.world[data-s="admin"] .screen { animation: w-screen 1.4s steps(2) infinite; animation-delay: calc(var(--i) * 0.3s); }
+
+/* outreach: megaphone pulses, speech bubbles fly to the village, houses light up */
+.world .mega { fill: var(--w-hi); }
+.world .megaw { fill: none; stroke: var(--w-hi); stroke-width: 2.2; stroke-linecap: round; animation: w-blink 1s ease-in-out infinite; }
+.world .bubble path { fill: #fff; }
+.world .bubble circle { fill: #157691; }
+.world .bubble {
+  transform: translate(var(--fx), var(--fy)) scale(0.3); opacity: 0;
+  animation: w-bubble 3.2s ease-in-out infinite; animation-delay: calc(var(--i) * 1s);
+}
+.world[data-s="promo"] .fx-promo { opacity: 1; }
+.world[data-s="promo"] .house .ft,
+.world[data-s="promo"] .house .roofs { fill: rgba(133, 232, 186, 0.32); }
+
+/* information: data streams into the HQ, server racks blink, statistics bars */
+.world .rack rect { fill: rgba(8, 50, 68, 0.9); stroke: var(--w-line); stroke-width: 1; }
+.world .rack circle { fill: var(--w-mint); animation: w-blink 0.9s steps(2) infinite; animation-delay: calc(var(--i) * 0.25s); }
+.world[data-s="data"] .fx-data,
+.world[data-s="data"] .fx-signal,
+.world[data-s="data"] .fx-emit { opacity: 1; }
+.world[data-s="data"] .fx-emit .bar { transform: scaleY(1); }
+.world[data-s="data"] .fx-emit .puff { display: none; }
+.world[data-s="data"] .screen { animation: w-screen 1.2s steps(2) infinite; animation-delay: calc(var(--i) * 0.2s); }
+
+/* online watch: lens sweeps the shelf, two items get flagged */
+.world .lens--store { animation-duration: 4s; }
+.world .flag { transform-box: fill-box; transform-origin: 50% 100%; transform: scale(0); transition: transform 0.4s cubic-bezier(0.3, 1.6, 0.5, 1); transition-delay: calc(1.4s + var(--i) * 0.6s); }
+.world[data-s="watch"] .fx-watch { opacity: 1; }
+.world[data-s="watch"] .flag { transform: scale(1); }
+.world[data-s="watch"] .bottle .ln { stroke: var(--w-hi); }
+
+@keyframes w-bubble {
+  0% { transform: translate(var(--fx), var(--fy)) scale(0.3); opacity: 0; }
+  15% { opacity: 1; }
+  70% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 0; }
+}
+
 /* intro: the whole map draws itself */
 .world.is-drawing .ln {
   stroke-dasharray: 1;

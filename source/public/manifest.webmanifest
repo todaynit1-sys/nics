@@ -20,6 +20,7 @@
   "shortcuts": [
     { "name": "화학사고 신고 안내", "short_name": "사고 신고", "url": "./#response", "icons": [{ "src": "sites/nics/icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "업무 안내", "url": "./#work", "icons": [{ "src": "sites/nics/icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "새소식", "url": "./#news", "icons": [{ "src": "sites/nics/icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "새소식", "url": "./#news", "icons": [{ "src": "sites/nics/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "부서별 업무 (30초 영상)", "short_name": "부서별 업무", "url": "./dept.html", "icons": [{ "src": "sites/nics/icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

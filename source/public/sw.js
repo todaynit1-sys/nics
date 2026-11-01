@@ -10,6 +10,7 @@ const CACHE = "nics-" + BUILD;
 const CORE = [
   "./",
   "./index.html",
+  "./dept.html",
   "./manifest.webmanifest",
   "./assets/style.css",
   "./assets/motion.js",
@@ -44,14 +45,19 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return; // 외부 사이트 링크·이미지는 건드리지 않음
 
   if (req.mode === "navigate") {
+    // Each page is stored under its own address (without ?query / #hash);
+    // offline, fall back to that page, then to the main page.
+    const key = url.origin + url.pathname;
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put("./index.html", copy));
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(key, copy));
+          }
           return res;
         })
-        .catch(() => caches.match("./index.html")),
+        .catch(() => caches.match(key).then((hit) => hit || caches.match("./index.html"))),
     );
     return;
   }

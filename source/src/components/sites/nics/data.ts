@@ -83,6 +83,7 @@ export const gnb: MenuGroup[] = [
       { label: "인사말", href: sub(46) },
       { label: "설립목적 및 배경", href: sub(47) },
       { label: "비전 · 기능", href: sub(101) },
+      { label: "부서별 업무 (30초 영상)", href: "/dept" },
       { label: "조직 및 직원", href: `${ORIGIN}/deptList.do?menuId=63` },
       { label: "찾아오시는길", href: sub(50) },
     ],

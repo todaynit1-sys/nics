@@ -28,33 +28,46 @@ execSync("npx next build", {
   env: { ...process.env, STATIC_EXPORT: "1" },
 });
 
-let html = readFileSync(join(outDir, "index.html"), "utf8");
+// Pages to export (Next writes out/<route>.html). All sit next to each other at the site root.
+const PAGES = ["index.html", "dept.html"];
+const sources = Object.fromEntries(PAGES.map((p) => [p, readFileSync(join(outDir, p), "utf8")]));
 
-// One stylesheet, rewritten so its url()s point from assets/ to sites/.
-const cssFiles = [...html.matchAll(/<link rel="stylesheet" href="\/_next\/static\/chunks\/([^"]+\.css)"[^>]*>/g)].map((m) => m[1]);
+// One stylesheet for every page (Next may split CSS per route), url()s rewritten from assets/ to sites/.
+const cssFiles = [
+  ...new Set(
+    Object.values(sources).flatMap((h) =>
+      [...h.matchAll(/<link rel="stylesheet" href="\/_next\/static\/chunks\/([^"]+\.css)"[^>]*>/g)].map((m) => m[1]),
+    ),
+  ),
+];
 const css = cssFiles
   .map((name) => readFileSync(join(outDir, "_next/static/chunks", name), "utf8"))
   .join("\n")
   .replace(/url\((["']?)\/sites\//g, "url($1../sites/");
 
-html = html
-  // Next runtime: script tags (including the inline RSC payload), preloads, stylesheets.
-  .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "")
-  .replace(/<link rel="(?:preload|modulepreload)"[^>]*>/g, "")
-  .replace(/<link rel="stylesheet"[^>]*>/g, "")
-  // Root-absolute asset paths -> relative (images, fonts, app icons, manifest).
-  .replace(/\b(src|href|srcSet)="\/sites\//g, '$1="./sites/')
-  .replace(/href="\/manifest\.webmanifest"/g, 'href="./manifest.webmanifest"')
-  .replace(/url\((["']?)\/sites\//g, "url($1./sites/")
-  .replace("</head>", '<link rel="stylesheet" href="./assets/style.css"/></head>')
-  .replace("</body>", '<script src="./assets/motion.js" defer></script></body>');
+const toStatic = (html) =>
+  html
+    // Next runtime: script tags (including the inline RSC payload), preloads, stylesheets.
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "")
+    .replace(/<link rel="(?:preload|modulepreload)"[^>]*>/g, "")
+    .replace(/<link rel="stylesheet"[^>]*>/g, "")
+    // Root-absolute asset paths -> relative (images, fonts, app icons, manifest).
+    .replace(/\b(src|href|srcSet)="\/sites\//g, '$1="./sites/')
+    .replace(/href="\/manifest\.webmanifest"/g, 'href="./manifest.webmanifest"')
+    .replace(/url\((["']?)\/sites\//g, "url($1./sites/")
+    // Links between pages: "/dept…" -> ./dept.html…, "/" and "/#…" -> ./index.html…
+    .replace(/href="\/dept(#[^"]*)?"/g, (_, hash = "") => `href="./dept.html${hash}"`)
+    .replace(/href="\/(#[^"]*)?"/g, (_, hash = "") => `href="./index.html${hash}"`)
+    .replace("</head>", '<link rel="stylesheet" href="./assets/style.css"/></head>')
+    .replace("</body>", '<script src="./assets/motion.js" defer></script></body>');
+const pages = Object.fromEntries(PAGES.map((p) => [p, toStatic(sources[p])]));
 
-for (const generated of ["index.html", "assets", "sites", "manifest.webmanifest", "sw.js"]) {
+for (const generated of [...PAGES, "assets", "sites", "manifest.webmanifest", "sw.js"]) {
   const path = join(target, generated);
   if (existsSync(path)) rmSync(path, { recursive: true });
 }
 mkdirSync(join(target, "assets"), { recursive: true });
-writeFileSync(join(target, "index.html"), html);
+for (const p of PAGES) writeFileSync(join(target, p), pages[p]);
 writeFileSync(join(target, "assets/style.css"), css);
 cpSync(join(outDir, "sites/nics/motion.js"), join(target, "assets/motion.js"));
 cpSync(join(outDir, "sites"), join(target, "sites"), { recursive: true });
@@ -65,7 +78,7 @@ cpSync(join(outDir, "manifest.webmanifest"), join(target, "manifest.webmanifest"
 const build = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
 writeFileSync(join(target, "sw.js"), readFileSync(join(outDir, "sw.js"), "utf8").replace("__BUILD__", build));
 
-const left = html.match(/(src|href)="\/(?!\/)[^"]*"/g) ?? [];
+const left = Object.values(pages).flatMap((h) => h.match(/(src|href)="\/(?!\/)[^"]*"/g) ?? []);
 console.log(`\nStatic HTML written to ${target}`);
-console.log(`Updated: index.html, assets/, sites/, manifest.webmanifest, sw.js (build ${build}; ${readdirSync(join(target, "sites/nics")).length} entries in sites/nics)`);
+console.log(`Updated: ${PAGES.join(", ")}, assets/, sites/, manifest.webmanifest, sw.js (build ${build}; ${readdirSync(join(target, "sites/nics")).length} entries in sites/nics)`);
 if (left.length) console.warn(`Root-absolute links left: ${left.join(" ")}`);

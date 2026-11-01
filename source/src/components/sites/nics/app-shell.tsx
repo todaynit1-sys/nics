@@ -5,24 +5,33 @@ import { Icon } from "./icons";
 
 // App-style chrome for phones and installed (PWA) use:
 // a bottom tab bar below 900px and the install sheet shown by motion.js.
-export function AppTabBar() {
+// On the department page the second tab is that page itself.
+export function AppTabBar({ page = "home" }: { page?: "home" | "dept" }) {
+  const home = page === "home" ? "" : "/";
   return (
     <nav className="tabbar" aria-label="빠른 이동">
-      <a href="#top" data-tab="top">
+      <a href={`${home}#top`} data-tab={page === "home" ? "top" : undefined}>
         <Icon name="home" size={22} />
         <span>홈</span>
       </a>
-      <a href="#work" data-tab="work">
-        <Icon name="flask" size={22} />
-        <span>업무</span>
-      </a>
+      {page === "home" ? (
+        <a href="#work" data-tab="work">
+          <Icon name="flask" size={22} />
+          <span>업무</span>
+        </a>
+      ) : (
+        <a href="#dept" aria-current="true">
+          <Icon name="users" size={22} />
+          <span>부서</span>
+        </a>
+      )}
       <a className="tabbar__call" href={`tel:${contact.situationTel}`} aria-label={`화학사고 신고 ${contact.situationRoom}`}>
         <span className="tabbar__callb">
           <Icon name="siren" size={24} />
         </span>
         <span>사고 신고</span>
       </a>
-      <a href="#news" data-tab="news">
+      <a href={`${home}#news`} data-tab={page === "home" ? "news" : undefined}>
         <Icon name="news" size={22} />
         <span>새소식</span>
       </a>

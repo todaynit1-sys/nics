@@ -4,12 +4,13 @@
  * 경로는 모두 이 파일 위치 기준(./)이라 Vercel 루트와 GitHub Pages 하위 경로 모두에서 동작합니다.
  * BUILD 값은 scripts/export-html.mjs가 내보낼 때마다 바꿔 넣어 예전 캐시를 비웁니다.
  */
-const BUILD = "20261101083209";
+const BUILD = "20261101091602";
 const CACHE = "nics-" + BUILD;
 
 const CORE = [
   "./",
   "./index.html",
+  "./dept.html",
   "./manifest.webmanifest",
   "./assets/style.css",
   "./assets/motion.js",
@@ -44,14 +45,19 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return; // 외부 사이트 링크·이미지는 건드리지 않음
 
   if (req.mode === "navigate") {
+    // Each page is stored under its own address (without ?query / #hash);
+    // offline, fall back to that page, then to the main page.
+    const key = url.origin + url.pathname;
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put("./index.html", copy));
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(key, copy));
+          }
           return res;
         })
-        .catch(() => caches.match("./index.html")),
+        .catch(() => caches.match(key).then((hit) => hit || caches.match("./index.html"))),
     );
     return;
   }

@@ -384,6 +384,147 @@
     });
   }
 
+  /* ---------------- 7. 부서별 업무 30초 플레이어 (dept 페이지) ---------------- */
+  var dxp = document.getElementById("dxp");
+  if (dxp) {
+    var dTabs = [].slice.call(document.querySelectorAll(".dx__tabs [role='tab']"));
+    var dPanels = [].slice.call(document.querySelectorAll(".dx__panel"));
+    var dDuties = [].slice.call(document.querySelectorAll(".dx__duties"));
+    var dsvg = dxp.querySelector(".world");
+    var hDept = dxp.querySelector(".dxp__dept"), hScene = dxp.querySelector(".dxp__scene");
+    var hTime = dxp.querySelector(".dxp__time b"), cap = dxp.querySelector(".dxp__cap");
+    var pbar = dxp.querySelector(".dxp__bar i"), chipsBox = dxp.querySelector(".dxp__chips");
+    var bPlay = dxp.querySelector("[data-act='play']"), bVoice = dxp.querySelector("[data-act='voice']"), bCC = dxp.querySelector("[data-act='cc']");
+    var dState = { d: 0, scenes: [], k: 0, el: 0, playing: !REDUCE, inView: true, voice: false, last: null };
+    var hasTTS = "speechSynthesis" in window && typeof SpeechSynthesisUtterance === "function";
+    var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+    var two = function (n) { return ("0" + n).slice(-2); };
+    var startOf = function (k) { var t = 0; for (var i = 0; i < k; i++) t += dState.scenes[i].ms; return t; };
+    var totalMs = function () { return startOf(dState.scenes.length); };
+    var mmss = function (ms) { var s = Math.floor(ms / 1000); return two(Math.floor(s / 60)) + ":" + two(s % 60); };
+
+    var koVoice = null;
+    function pickVoice() {
+      if (!hasTTS) return;
+      var vs = window.speechSynthesis.getVoices();
+      koVoice = vs.filter(function (v) { return /^ko/i.test(v.lang); })[0] || null;
+    }
+    if (hasTTS) { pickVoice(); window.speechSynthesis.onvoiceschanged = pickVoice; } else if (bVoice) bVoice.hidden = true;
+    function speak(text) {
+      if (!hasTTS) return;
+      window.speechSynthesis.cancel();
+      if (!dState.voice) return;
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = "ko-KR"; u.rate = 1.05; if (koVoice) u.voice = koVoice;
+      window.speechSynthesis.speak(u);
+    }
+
+    function renderChips() {
+      chipsBox.innerHTML = dState.scenes.map(function (s, i) {
+        return '<li><button type="button" data-scene="' + i + '" aria-current="' + (i === dState.k ? "step" : "false") + '">' +
+          '<span class="dxp__cno">' + two(i + 1) + " · " + two(Math.round(startOf(i) / 1000)) + "초</span><b>" + esc(s.title) + '</b><i aria-hidden="true"></i></button></li>';
+      }).join("");
+    }
+    function paintDx() {
+      var at = startOf(dState.k) + dState.el, tot = totalMs();
+      if (hTime) hTime.textContent = mmss(at);
+      if (pbar) pbar.style.transform = "scaleX(" + Math.min(1, at / tot) + ")";
+      [].slice.call(chipsBox.querySelectorAll("i")).forEach(function (i, j) {
+        var v = j < dState.k ? 1 : j > dState.k ? 0 : Math.min(1, dState.el / dState.scenes[j].ms);
+        i.style.transform = "scaleX(" + v + ")";
+      });
+    }
+    function goScene(k) {
+      dState.k = (k + dState.scenes.length) % dState.scenes.length; dState.el = 0;
+      var s = dState.scenes[dState.k];
+      dsvg.setAttribute("data-s", s.s); cam(dsvg, s.cam);
+      if (s.s === "intro" && !REDUCE) { dsvg.classList.remove("is-drawing"); void dsvg.getBoundingClientRect(); dsvg.classList.add("is-drawing"); }
+      hScene.textContent = s.title;
+      cap.textContent = s.caption; cap.classList.remove("in"); void cap.offsetWidth; cap.classList.add("in");
+      [].slice.call(chipsBox.querySelectorAll("button")).forEach(function (b, j) { b.setAttribute("aria-current", j === dState.k ? "step" : "false"); });
+      var panel = dPanels[dState.d];
+      [].slice.call(panel.querySelectorAll(".dx__tasks button")).forEach(function (b) { b.classList.toggle("is-on", +b.getAttribute("data-scene") === dState.k); });
+      speak(s.caption);
+      paintDx();
+    }
+    function selectDept(i, focus) {
+      dState.d = i;
+      dTabs.forEach(function (t, j) { t.setAttribute("aria-selected", String(j === i)); t.tabIndex = j === i ? 0 : -1; });
+      dPanels.forEach(function (p, j) { p.hidden = j !== i; });
+      dDuties.forEach(function (p, j) { p.hidden = j !== i; });
+      dState.scenes = JSON.parse(dPanels[i].getAttribute("data-scenes") || "[]");
+      hDept.textContent = dTabs[i].textContent.replace(/^\d+/, "").trim();
+      dState.k = 0; renderChips(); goScene(0);
+      var id = dTabs[i].getAttribute("data-dept");
+      if (history.replaceState) history.replaceState(null, "", "#" + id);
+      if (focus) dTabs[i].focus();
+      dTabs[i].scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+    function setPlaying(p) {
+      dState.playing = p;
+      dxp.classList.toggle("is-paused", !p);
+      bPlay.setAttribute("aria-pressed", String(!p));
+      bPlay.querySelector("span").textContent = p ? "일시정지" : "재생";
+      if (!p && hasTTS) window.speechSynthesis.cancel();
+      idleDx();
+    }
+    function idleDx() { dxp.classList.toggle("is-idle", !(dState.playing && dState.inView && !document.hidden)); }
+
+    dTabs.forEach(function (t, i) {
+      t.addEventListener("click", function () { selectDept(i); });
+      t.addEventListener("keydown", function (e) {
+        var dd = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (dd) { e.preventDefault(); selectDept((i + dd + dTabs.length) % dTabs.length, true); }
+      });
+    });
+    chipsBox.addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) goScene(+b.getAttribute("data-scene")); });
+    dPanels.forEach(function (p) {
+      p.addEventListener("click", function (e) { var b = e.target.closest(".dx__tasks button"); if (b) { goScene(+b.getAttribute("data-scene")); if (!dState.playing) setPlaying(true); } });
+    });
+    bPlay.addEventListener("click", function () { setPlaying(!dState.playing); });
+    bCC.addEventListener("click", function () {
+      var on = dxp.classList.toggle("no-cc") === false;
+      bCC.setAttribute("aria-pressed", String(on));
+      bCC.querySelector("span:last-child").textContent = on ? "자막 끄기" : "자막 켜기";
+    });
+    if (bVoice) bVoice.addEventListener("click", function () {
+      dState.voice = !dState.voice;
+      bVoice.setAttribute("aria-pressed", String(dState.voice));
+      bVoice.querySelector("span").textContent = dState.voice ? "음성 해설 끄기" : "음성 해설 듣기";
+      speak(dState.voice ? dState.scenes[dState.k].caption : "");
+    });
+
+    var dLoop = function (ts) {
+      if (dState.last === null) dState.last = ts;
+      var dt = Math.min(100, ts - dState.last); dState.last = ts;
+      if (dState.playing && dState.inView && !document.hidden) {
+        dState.el += dt;
+        var s = dState.scenes[dState.k];
+        var talking = dState.voice && hasTTS && window.speechSynthesis.speaking;
+        if (dState.el >= s.ms) {
+          if (talking) dState.el = s.ms; // let the narration finish before moving on
+          else goScene(dState.k + 1);
+        }
+        paintDx();
+      }
+      requestAnimationFrame(dLoop);
+    };
+    onVisible(dxp, function (v) { dState.inView = v; idleDx(); });
+    document.addEventListener("visibilitychange", idleDx);
+
+    var deptIds = dTabs.map(function (t) { return t.getAttribute("data-dept"); });
+    var fromHash = deptIds.indexOf(location.hash.slice(1));
+    selectDept(fromHash > 0 ? fromHash : 0);
+    if (fromHash > 0) document.getElementById("dept").scrollIntoView();
+    // Links such as the main-page cards or the browser's back button change only the hash.
+    window.addEventListener("hashchange", function () {
+      var i = deptIds.indexOf(location.hash.slice(1));
+      if (i >= 0 && i !== dState.d) selectDept(i);
+    });
+    setPlaying(!REDUCE);
+    requestAnimationFrame(dLoop);
+  }
+
   // 오프라인 저장(서비스 워커): 내보낸 정적 사이트에서만 등록. 개발 서버(Next)는 캐시하지 않음.
   if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol) && !self.__next_f) {
     navigator.serviceWorker.register("./sw.js").catch(function () {});

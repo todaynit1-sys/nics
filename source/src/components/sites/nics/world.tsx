@@ -22,6 +22,15 @@ export const CAMS: Record<string, [number, number, number]> = {
   edu: camera(VIEW, 400, 400, 20, 1.45),
   investigate: camera(VIEW, 150, 230, 30, 1.2),
   shield: camera(VIEW, 300, 290, 20, 0.9),
+  // Extra framings used by the department player (dept page).
+  admin: camera(VIEW, 120, 395, 70, 1.6),
+  promo: camera(VIEW, 300, 260, 40, 1.0),
+  data: camera(VIEW, 200, 300, 50, 1.05),
+  watch: camera(VIEW, 520, 520, 30, 1.6),
+  village: camera(VIEW, 440, 140, 20, 1.35),
+  lab: camera(VIEW, 120, 505, 70, 1.9),
+  plant: camera(VIEW, 140, 150, 40, 1.2),
+  training: camera(VIEW, 400, 410, 20, 1.9),
 };
 
 // ---------- primitives ----------
@@ -400,6 +409,90 @@ export function World({ className = "" }: { className?: string }) {
             <circle className="lensr" r="20" />
             <path className="lensh" d="M14 14L30 30" />
           </g>
+        </g>
+
+        {/* administration: plans, budget and performance above the HQ */}
+        <g className="fx fx-admin">
+          <g transform={`translate(${iso(115, 390, 120)[0]} ${iso(115, 390, 120)[1]})`}>
+            {[0, 1, 2].map((i) => (
+              <g key={i} className="doc" style={{ "--i": i } as React.CSSProperties} transform={`translate(${-58 + i * 9} ${-i * 7})`}>
+                <rect width="38" height="48" rx="4" />
+                <path d="M8 12h22M8 20h22M8 28h14" />
+              </g>
+            ))}
+            <g transform="translate(18 0)">
+              <path className="chartbase" d="M0 0H52" />
+              {[16, 24, 20, 34].map((h, i) => (
+                <rect key={i} className="bar" style={{ "--i": i } as React.CSSProperties} x={4 + i * 12} y={-h} width="8" height={h} rx="2" />
+              ))}
+              <path className="trend" pathLength={1} d="M6 -20L18 -28L30 -24L42 -40L52 -46" />
+            </g>
+          </g>
+        </g>
+
+        {/* outreach: messages travel from the HQ to the village (홍보 · 지역사회 고지 · 체험교육) */}
+        <g className="fx fx-promo">
+          <g transform={`translate(${hqRoof[0] + 30} ${hqRoof[1] - 20})`}>
+            <path className="mega" d="M-10 -6h8l14 -9v30l-14 -9h-8z" />
+            <path className="megaw" d="M18 -8a12 12 0 0 1 0 16M23 -13a19 19 0 0 1 0 26" />
+          </g>
+          {[0, 1, 2].map((i) => (
+            <g
+              key={i}
+              className="bubble"
+              style={{
+                "--i": i,
+                "--fx": `${hqRoof[0] + 40}px`, "--fy": `${hqRoof[1] - 40}px`,
+                "--tx": `${iso(430 + i * 30, 120 + i * 30, 60)[0]}px`, "--ty": `${iso(430 + i * 30, 120 + i * 30, 60)[1]}px`,
+              } as React.CSSProperties}
+            >
+              <path d="M-16 -12h32a6 6 0 0 1 6 6v10a6 6 0 0 1-6 6H-4l-8 8v-8h-4a6 6 0 0 1-6-6v-10a6 6 0 0 1 6-6z" />
+              <circle cx="-7" cy="-1" r="2" />
+              <circle cx="0" cy="-1" r="2" />
+              <circle cx="7" cy="-1" r="2" />
+            </g>
+          ))}
+        </g>
+
+        {/* information: data from plant, store and village flows into the HQ servers */}
+        <g className="fx fx-data">
+          {[
+            `M${storeFront[0]} ${storeFront[1] - 30}Q${iso(300, 470, 140)[0]} ${iso(300, 470, 140)[1]} ${hqRoof[0] + 10} ${hqRoof[1] - 6}`,
+            `M${iso(440, 150, 40)[0]} ${iso(440, 150, 40)[1]}Q${iso(300, 300, 180)[0]} ${iso(300, 300, 180)[1]} ${hqRoof[0] + 6} ${hqRoof[1] - 14}`,
+          ].map((d, i) => (
+            <path key={i} className="data" d={d} style={{ animationDelay: `${i * -0.4}s` }} />
+          ))}
+          <g transform={`translate(${iso(220, 380, 30)[0]} ${iso(220, 380, 30)[1]})`}>
+            {[0, 1, 2].map((i) => (
+              <g key={i} className="rack" style={{ "--i": i } as React.CSSProperties} transform={`translate(0 ${-14 - i * 13})`}>
+                <rect x="-16" y="-6" width="32" height="11" rx="2" />
+                <circle cx="-9" cy="-0.5" r="1.8" />
+                <circle cx="-3" cy="-0.5" r="1.8" />
+              </g>
+            ))}
+          </g>
+        </g>
+
+        {/* online watch over products on sale: a lens sweeps the store shelf, suspicious items flagged */}
+        <g className="fx fx-watch">
+          <g
+            className="lens lens--store"
+            style={{
+              "--p0x": `${iso(495, 572, 40)[0]}px`, "--p0y": `${iso(495, 572, 40)[1]}px`,
+              "--p1x": `${iso(563, 572, 40)[0]}px`, "--p1y": `${iso(563, 572, 40)[1]}px`,
+              "--p2x": `${iso(530, 520, 60)[0]}px`, "--p2y": `${iso(530, 520, 60)[1]}px`,
+            } as React.CSSProperties}
+          >
+            <circle className="lensg" r="16" />
+            <circle className="lensr" r="16" />
+            <path className="lensh" d="M11 11L24 24" />
+          </g>
+          {[512, 546].map((x, i) => (
+            <g key={x} className="flag" style={{ "--i": i } as React.CSSProperties} transform={`translate(${iso(x, 572, 34)[0]} ${iso(x, 572, 34)[1]})`}>
+              <path className="warn" d="M0 -11L10 6H-10Z" />
+              <path className="warnm" d="M0 -4V1M0 3.5V4" />
+            </g>
+          ))}
         </g>
 
         {/* protection dome over the whole map */}

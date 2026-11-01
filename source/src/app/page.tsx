@@ -1,4 +1,5 @@
 import { AppTabBar, InstallSheet } from "@/components/sites/nics/app-shell";
+import { DeptTeaser } from "@/components/sites/nics/dept-teaser";
 import { Hero } from "@/components/sites/nics/hero";
 import { News } from "@/components/sites/nics/news";
 import { Quick } from "@/components/sites/nics/quick";
@@ -18,6 +19,7 @@ export default function Home() {
         <Hero />
         <Story />
         <Response />
+        <DeptTeaser />
         <News />
         <Quick />
       </main>

@@ -22,6 +22,8 @@ const paths = {
   download: "M12 3.5v11M7.5 10.5 12 15l4.5-4.5M4.5 17v2.5h15V17",
   share: "M12 3.5v11M8 7.5l4-4 4 4M6.5 11H5v9.5h14V11h-1.5",
   plus: "M12 5v14M5 12h14",
+  megaphone: "M3.5 10v4h3l6.5 4.5v-13L6.5 10h-3zM16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11",
+  users: "M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 6.8M18 14.2A6.5 6.5 0 0 1 21.5 20",
 } as const;
 
 export type IconName = keyof typeof paths;
