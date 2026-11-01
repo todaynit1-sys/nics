@@ -15,6 +15,11 @@ export function SiteHeader() {
             <b>{contact.situationTel}</b>
             <span>화학사고 24시간 신고</span>
           </a>
+          {/* Shown by motion.js only when the browser can install the app and it isn't installed yet. */}
+          <button className="install" type="button" hidden>
+            <Icon name="download" size={18} stroke={2} />
+            <span>앱 설치</span>
+          </button>
           <a className="mini" href={EDU} target="_blank" rel="noopener">
             교육신청
           </a>

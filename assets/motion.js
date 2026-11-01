@@ -292,15 +292,21 @@
   /* ---------------- 5. 헤더 메뉴 · 새소식 탭 ---------------- */
   var burger = document.querySelector(".burger");
   var drawer = document.getElementById("drawer");
-  if (burger && drawer) {
-    burger.addEventListener("click", function () {
-      var open = burger.getAttribute("aria-expanded") !== "true";
-      burger.setAttribute("aria-expanded", String(open));
-      burger.setAttribute("aria-label", open ? "메뉴 닫기" : "메뉴 열기");
-      drawer.hidden = !open;
-    });
+  var tabMenu = document.querySelector("[data-open-drawer]");
+  // The drawer sits in the sticky header, so it is on screen wherever the page is scrolled.
+  function setDrawer(open) {
+    if (!drawer) return;
+    drawer.hidden = !open;
+    [burger, tabMenu].forEach(function (b) { if (b) b.setAttribute("aria-expanded", String(open)); });
+    if (burger) burger.setAttribute("aria-label", open ? "메뉴 닫기" : "메뉴 열기");
+    if (open) { var first = drawer.querySelector("summary, a"); if (first) first.focus(); }
+  }
+  if (burger) burger.addEventListener("click", function () { setDrawer(drawer.hidden); });
+  if (tabMenu) tabMenu.addEventListener("click", function () { setDrawer(drawer.hidden); });
+  if (drawer) {
+    drawer.addEventListener("click", function (e) { if (e.target.closest("a")) setDrawer(false); });
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && !drawer.hidden) { drawer.hidden = true; burger.setAttribute("aria-expanded", "false"); burger.focus(); }
+      if (e.key === "Escape" && !drawer.hidden) { setDrawer(false); (burger && burger.offsetParent ? burger : tabMenu).focus(); }
     });
   }
   if (hdTop && hd) {
@@ -326,5 +332,61 @@
       if (d) { e.preventDefault(); selectTab(tabs[(i + d + tabs.length) % tabs.length], true); }
     });
   });
+
+  /* ---------------- 6. 앱(PWA): 하단 탭 · 설치 · 오프라인 ---------------- */
+  // 하단 탭: 지금 보고 있는 구역 표시
+  var tabLinks = [].slice.call(document.querySelectorAll(".tabbar [data-tab]"));
+  if (tabLinks.length && "IntersectionObserver" in window) {
+    var areas = { top: "top", work: "work", response: "work", news: "news", systems: "news" };
+    var seen = {};
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { seen[e.target.id] = e.isIntersecting; });
+      var cur = "top";
+      ["top", "work", "response", "news", "systems"].forEach(function (id) { if (seen[id]) cur = areas[id]; });
+      tabLinks.forEach(function (a) {
+        if (a.getAttribute("data-tab") === cur) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current");
+      });
+    }, { rootMargin: "-45% 0px -50% 0px" });
+    Object.keys(areas).forEach(function (id) { var el = document.getElementById(id); if (el) io.observe(el); });
+  }
+
+  // 설치: 크롬·엣지·삼성인터넷은 beforeinstallprompt, iOS Safari는 안내 시트
+  var installBtn = document.querySelector(".install");
+  var sheet = document.getElementById("install-sheet");
+  var deferred = null;
+  var standalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+  var ua = navigator.userAgent;
+  var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  function openSheet() {
+    if (!sheet) return;
+    var ios = sheet.querySelector("[data-ios]"), other = sheet.querySelector("[data-other]");
+    if (ios) ios.hidden = !isIOS;
+    if (other) other.hidden = isIOS;
+    sheet.hidden = false;
+    var c = sheet.querySelector("[data-close-sheet]"); if (c) c.focus();
+  }
+  function closeSheet() { if (sheet) sheet.hidden = true; if (installBtn) installBtn.focus(); }
+  if (sheet) {
+    sheet.addEventListener("click", function (e) { if (e.target === sheet || e.target.closest("[data-close-sheet]")) closeSheet(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !sheet.hidden) closeSheet(); });
+  }
+  if (installBtn && !standalone) {
+    window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferred = e; installBtn.hidden = false; });
+    window.addEventListener("appinstalled", function () { installBtn.hidden = true; deferred = null; });
+    if (isIOS && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua)) installBtn.hidden = false;
+    installBtn.addEventListener("click", function () {
+      if (deferred) {
+        deferred.prompt();
+        deferred.userChoice.then(function (r) { if (r.outcome === "accepted") installBtn.hidden = true; deferred = null; });
+      } else {
+        openSheet();
+      }
+    });
+  }
+
+  // 오프라인 저장(서비스 워커): 내보낸 정적 사이트에서만 등록. 개발 서버(Next)는 캐시하지 않음.
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol) && !self.__next_f) {
+    navigator.serviceWorker.register("./sw.js").catch(function () {});
+  }
   }
 })();

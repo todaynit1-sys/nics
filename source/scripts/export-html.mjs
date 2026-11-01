@@ -42,14 +42,14 @@ html = html
   .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "")
   .replace(/<link rel="(?:preload|modulepreload)"[^>]*>/g, "")
   .replace(/<link rel="stylesheet"[^>]*>/g, "")
-  .replace(/<link rel="icon"[^>]*>/g, "")
-  // Root-absolute asset paths -> relative.
+  // Root-absolute asset paths -> relative (images, fonts, app icons, manifest).
   .replace(/\b(src|href|srcSet)="\/sites\//g, '$1="./sites/')
+  .replace(/href="\/manifest\.webmanifest"/g, 'href="./manifest.webmanifest"')
   .replace(/url\((["']?)\/sites\//g, "url($1./sites/")
   .replace("</head>", '<link rel="stylesheet" href="./assets/style.css"/></head>')
   .replace("</body>", '<script src="./assets/motion.js" defer></script></body>');
 
-for (const generated of ["index.html", "assets", "sites"]) {
+for (const generated of ["index.html", "assets", "sites", "manifest.webmanifest", "sw.js"]) {
   const path = join(target, generated);
   if (existsSync(path)) rmSync(path, { recursive: true });
 }
@@ -59,8 +59,13 @@ writeFileSync(join(target, "assets/style.css"), css);
 cpSync(join(outDir, "sites/nics/motion.js"), join(target, "assets/motion.js"));
 cpSync(join(outDir, "sites"), join(target, "sites"), { recursive: true });
 rmSync(join(target, "sites/nics/motion.js"));
+// PWA: manifest + service worker at the site root (the worker's scope is its own folder).
+// A fresh BUILD id makes installed apps drop the previous cache after each export.
+cpSync(join(outDir, "manifest.webmanifest"), join(target, "manifest.webmanifest"));
+const build = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
+writeFileSync(join(target, "sw.js"), readFileSync(join(outDir, "sw.js"), "utf8").replace("__BUILD__", build));
 
 const left = html.match(/(src|href)="\/(?!\/)[^"]*"/g) ?? [];
 console.log(`\nStatic HTML written to ${target}`);
-console.log(`Updated: index.html, assets/, sites/ (${readdirSync(join(target, "sites/nics")).length} entries in sites/nics)`);
+console.log(`Updated: index.html, assets/, sites/, manifest.webmanifest, sw.js (build ${build}; ${readdirSync(join(target, "sites/nics")).length} entries in sites/nics)`);
 if (left.length) console.warn(`Root-absolute links left: ${left.join(" ")}`);

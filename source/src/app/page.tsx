@@ -1,3 +1,4 @@
+import { AppTabBar, InstallSheet } from "@/components/sites/nics/app-shell";
 import { Hero } from "@/components/sites/nics/hero";
 import { News } from "@/components/sites/nics/news";
 import { Quick } from "@/components/sites/nics/quick";
@@ -21,6 +22,8 @@ export default function Home() {
         <Quick />
       </main>
       <SiteFooter />
+      <AppTabBar />
+      <InstallSheet />
     </>
   );
 }

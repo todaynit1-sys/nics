@@ -16,6 +16,12 @@ const paths = {
   menu: "M4 7h16M4 12h16M4 17h16",
   close: "M6 6l12 12M18 6 6 18",
   flask: "M9.5 3h5M10.5 3v6L5 18.5A1.6 1.6 0 0 0 6.4 21h11.2a1.6 1.6 0 0 0 1.4-2.5L13.5 9V3M7.5 15h9",
+  home: "M3.5 10.5 12 3.5l8.5 7M5.5 9v11h4.5v-6h4v6h4.5V9",
+  grid: "M4 4h6.5v6.5H4zM13.5 4H20v6.5h-6.5zM4 13.5h6.5V20H4zM13.5 13.5H20V20h-6.5z",
+  news: "M5 4.5h11.5v15H6.5A1.5 1.5 0 0 1 5 18V4.5zM16.5 8.5H19V18a1.5 1.5 0 0 1-3 0M8 8.5h5.5M8 12h5.5M8 15.5h3.5",
+  download: "M12 3.5v11M7.5 10.5 12 15l4.5-4.5M4.5 17v2.5h15V17",
+  share: "M12 3.5v11M8 7.5l4-4 4 4M6.5 11H5v9.5h14V11h-1.5",
+  plus: "M12 5v14M5 12h14",
 } as const;
 
 export type IconName = keyof typeof paths;
